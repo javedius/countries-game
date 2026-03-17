@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Country Ring Survival</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="topbar">
+        <div class="topbar__left" aria-hidden="true"></div>
+        <aside class="topbar__right leaders" aria-label="Топ победителей">
+          <div class="leaders__title">Top 3 Champions</div>
+          <ol id="leaderboard"></ol>
+        </aside>
+      </header>
+
+      <main class="arena-layout">
+        <section class="arena-panel">
+          <canvas id="game" width="720" height="1080" aria-label="Игровая арена"></canvas>
+        </section>
+      </main>
+    </div>
+
+    <script type="module" src="./main.js"></script>
+  </body>
+</html>
