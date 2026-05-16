@@ -38,6 +38,8 @@ const RESTITUTION = 0.92;
 const GAP_ACCELERATION = 520;
 // Высота, на которой оседают выбывшие шары.
 const FALL_Y = 900;
+// Количество частиц при выбывании шара.
+const PARTICLE_COUNT = 18;
 
 // Список стран, которые участвуют в раунде.
 const countries = [
@@ -152,6 +154,8 @@ const state = {
   eliminated: [],
   // Визуальные падающие шары после вылета.
   falling: [],
+  // Частицы от выбывания шаров.
+  particles: [],
   // Победитель текущего раунда, если уже определён.
   winner: null,
   // Таймер до автоматического перезапуска раунда.
@@ -211,6 +215,7 @@ function resetRound() {
   state.spawnOrder = shuffleCountries(countries);
   state.eliminated = [];
   state.falling = [];
+  state.particles = [];
   state.winner = null;
   state.winnerTimer = 0;
   state.announcedFiveLeft = false;
@@ -298,6 +303,22 @@ function ejectItem(item) {
     spin: (Math.random() - 0.5) * 4,
     settled: false,
   });
+  
+  // Создаём частицы при выбывании
+  for (let i = 0; i < PARTICLE_COUNT; i += 1) {
+    const particleAngle = Math.random() * Math.PI * 2;
+    const particleSpeed = 80 + Math.random() * 180;
+    state.particles.push({
+      x: item.x,
+      y: item.y,
+      vx: Math.cos(particleAngle) * particleSpeed,
+      vy: Math.sin(particleAngle) * particleSpeed,
+      life: 0.4 + Math.random() * 0.3,
+      maxLife: 0.4 + Math.random() * 0.3,
+      size: 2 + Math.random() * 3,
+      color: `hsl(${180 + Math.random() * 60}, 100%, ${50 + Math.random() * 30}%)`,
+    });
+  }
 }
 
 function updateArenaCollision(item, dt) {
@@ -371,6 +392,17 @@ function updateFalling(dt) {
   }
 }
 
+function updateParticles(dt) {
+  state.particles = state.particles.filter((p) => {
+    p.life -= dt;
+    p.x += p.vx * dt;
+    p.y += p.vy * dt;
+    p.vy += GRAVITY * 0.3 * dt;
+    p.vx *= 0.98;
+    return p.life > 0;
+  });
+}
+
 function speakText(text) {
   if (!("speechSynthesis" in window) || !speechUnlocked) return;
   loadVoices();
@@ -426,6 +458,7 @@ function update(dt) {
 
   resolveItemCollisions();
   updateFalling(dt);
+  updateParticles(dt);
   if (
     !state.announcedFiveLeft &&
     state.spawnIndex >= state.spawnOrder.length &&
@@ -571,6 +604,19 @@ function drawFallingItems() {
   }
 }
 
+function drawParticles() {
+  for (const p of state.particles) {
+    const alpha = p.life / p.maxLife;
+    ctx.save();
+    ctx.globalAlpha = alpha;
+    ctx.fillStyle = p.color;
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  }
+}
+
 function roundRect(context, x, y, width, height, radius) {
   context.beginPath();
   context.moveTo(x + radius, y);
@@ -594,6 +640,7 @@ function render() {
   drawRing();
   for (const item of state.items) drawItem(item);
   drawFallingItems();
+  drawParticles();
   // drawLabels();
   drawWinnerCard();
 }
